@@ -1,3 +1,2 @@
 # RV32I
-simple core
-only implement 37 instructions
+simple core，only implement 37 instructions

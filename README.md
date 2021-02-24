@@ -1,2 +1,3 @@
 # RV32I
-simple core，only implement 37 instructions
+simple implement 37 instructions
+![pipline](https://github.com/yangguoming/RV32I/blob/main/pic/pipline.PNG)

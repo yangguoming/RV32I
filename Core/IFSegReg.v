@@ -1,14 +1,5 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: USTC ESLAB (Embeded System Lab)
-// Engineer: Haojun Xia
-// Create Date: 2019/02/08
-// Design Name: RISCV-Pipline CPU
-// Module Name: IFSegReg
-// Target Devices: Nexys4
-// Tool Versions: Vivado 2017.4.1
-// Description: PC Register
-//////////////////////////////////////////////////////////////////////////////////
+
 module IFSegReg(
     input wire clk,
     input wire en, clear,
@@ -27,7 +18,3 @@ module IFSegReg(
     
 endmodule
 
-//功能说明
-    //IDSegReg是IF-ID段寄存器
-//实验要求  
-    //无需修改

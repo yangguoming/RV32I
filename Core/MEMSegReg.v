@@ -1,14 +1,5 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: USTC ESLAB（Embeded System Lab）
-// Engineer: Haojun Xia & Xuan Wang
-// Create Date: 2019/02/08
-// Design Name: RISCV-Pipline CPU
-// Module Name: MEMSegReg
-// Target Devices: Nexys4
-// Tool Versions: Vivado 2017.4.1
-// Description: EX-MEM Segment Register
-//////////////////////////////////////////////////////////////////////////////////
+
 module MEMSegReg(
     input wire clk,
     input wire en,
@@ -56,8 +47,3 @@ module MEMSegReg(
         end
     
 endmodule
-
-//功能说明
-    //MEMSegReg是EX-MEM段寄存器
-//实验要求  
-    //无需修改

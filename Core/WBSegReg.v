@@ -1,14 +1,5 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: USTC ESLAB（Embeded System Lab）
-// Engineer: Haojun Xia & Xuan Wang
-// Create Date: 2019/02/08
-// Design Name: RISCV-Pipline CPU
-// Module Name: WBSegReg
-// Target Devices: Nexys4
-// Tool Versions: Vivado 2017.4.1
-// Description: Write Back Segment Register
-//////////////////////////////////////////////////////////////////////////////////
+
 module WBSegReg(
     input wire clk,
     input wire en,
@@ -93,20 +84,4 @@ endmodule
     //因此在段寄存器模块中调用该同步memory，直接将输出传递到WB段组合逻辑
     //调用mem模块后输出为RD_raw，通过assign RD = stall_ff ? RD_old : (clear_ff ? 32'b0 : RD_raw );
     //从而实现RD段寄存器stall和clear功能
-//实验要求  
-    //你需要补全上方代码，需补全的片段截取如下
-    //DataRam DataRamInst (
-    //    .clk    (???),                      //请补全
-    //    .wea    (???),                      //请补全
-    //    .addra  (???),                      //请补全
-    //    .dina   (???),                      //请补全
-    //    .douta  ( RD_raw         ),
-    //    .web    ( WE2            ),
-    //    .addrb  ( A2[31:2]       ),
-    //    .dinb   ( WD2            ),
-    //    .doutb  ( RD2            )
-    //);   
-//注意事项
-    //输入到DataRam的addra是字地址，一个字32bit
-    //请配合DataExt模块实现非字对齐字节load
-    //请通过补全代码实现非字对齐store
+

@@ -1,75 +1,4 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: USTC ESLAB (Embeded System Lab)
-// Engineer: Haojun Xia
-// Create Date: 2019/02/08
-// Design Name: RISCV-Pipline CPU
-// Module Name: ControlUnit
-// Target Devices: Nexys4
-// Tool Versions: Vivado 2017.4.1
-// Description: RISC-V Instruction Decoder
-//////////////////////////////////////////////////////////////////////////////////
-`include "Parameters.v"
-`define OP_JAL    7'b1101111 //JAL的操作码
-`define OP_JALR   7'b1100111 //JALR的操作码
-`define OP_Load   7'b0000011 //Load类指令的操作码
-`define OP_Store  7'b0100011 //Store类指令的操作码
-`define OP_Branch 7'b1100011 //Branch类指令的操作码
-`define OP_LUI    7'b0110111 //LUI的操作码
-`define OP_AUIPC  7'b0010111 //AUIPC的操作码
-`define OP_RegReg 7'b0110011 //寄存器-寄存器算术指令的操作码
-`define OP_RegImm 7'b0010011 //寄存器-立即数算术指令的操作码
-module ControlUnit(
-    input wire [6:0] Op,
-    input wire [2:0] Fn3,
-    input wire [6:0] Fn7,
-    output reg JalD,
-    output reg JalrD,
-    output reg [2:0] RegWriteD,
-    output reg MemToRegD,
-    output reg [3:0] MemWriteD,
-    output reg LoadNpcD,
-    output reg [1:0] RegReadD,
-    output reg [2:0] BranchTypeD,
-    output reg [3:0] AluContrlD,
-    output reg [1:0] AluSrc2D,
-    output reg AluSrc1D,
-    output reg [2:0] ImmType
-    );
-	always@(*) begin
-		JalD         =  Op == `OP_JAL; //JAL指令才为1
-		JalrD        =  Op == `OP_JALR; //JALR指令才为1
-		MemToRegD    =  Op == `OP_Load; //Load类指令才为1
-		RegWriteD    =  Op == `OP_Load ? Fn3 + 3'b001 : (Op == `OP_Store || Op == `OP_Branch ? `NOREGWRITE : `LW); //Load类指令按Fn3选择（Parameters中直接按Fn3编码定义，设置偏移量为1 是为了将3'b000保留给NOREGWRITE）, Store和Branch类指令为NOREGWRITE，其余为LW
-		MemWriteD    =  Op == `OP_Store ? 4'b1111 >> (3'b100 - (3'b001 << Fn3)) : 4'b0000; //3种Store指令分别对4'b1111右移 4 - pow(2, Fn3) 位
-		LoadNpcD     =  Op == `OP_JAL || Op == `OP_JALR; //JAL/JALR指令才为1
-		RegReadD[1]  =  Op != `OP_LUI && Op != `OP_AUIPC && Op != `OP_JAL; //除了LUI/AUIPC/JAL这3条指令，其他都用到了寄存器A1端口
-		RegReadD[0]  =  Op == `OP_Store || Op == `OP_RegReg || Op == `OP_Branch; //Store类/RegReg类/Branch类指令用到了寄存器A2端口
-		BranchTypeD  =  Op == `OP_Branch ? Fn3 - 3'b010 : `NOBRANCH; //Branch类指令按Fn3选择（Parameters中直接按Fn3编码定义，偏移3'b010，为了将000留给NOBRANCH），其余都是NOBRANCH
-		AluSrc1D     =  Op == `OP_AUIPC; //AUIPC指令的src1才为1
-		AluSrc2D[1]  =  Op != `OP_RegReg && Op != `OP_Branch && ~(Op == `OP_RegImm && (Fn3 == 3'b001 || Fn3 == 3'b101)); //RegReg类/Branch类/SLLI/SRLI/SRAI的src2高位为0
-		AluSrc2D[0]  =  Op == `OP_RegImm && (Fn3 == 3'b001 || Fn3 == 3'b101); //SLLI/SRLI/SRAI三条指令src2为2’b01，低位为1
-		case(Op)
-			`OP_Load:   ImmType = `ITYPE;
-			`OP_Store:  ImmType = `STYPE;
-			`OP_RegReg: ImmType = `RTYPE;
-			`OP_RegImm: ImmType = `ITYPE;
-			`OP_LUI:    ImmType = `UTYPE;
-			`OP_AUIPC:  ImmType = `UTYPE;
-			`OP_Branch: ImmType = `BTYPE;
-			`OP_JAL:    ImmType = `JTYPE;
-			`OP_JALR:   ImmType = `ITYPE;
-			default:    ImmType = `RTYPE;
-		endcase
-		case(Op) //AluContrlD信号生成，Parameters中直接按指令Fn3对应的编码进行定义
-			`OP_RegReg: AluContrlD = {1'b0 ,Fn3} + (Fn7 == 7'b0100000 ? 4'b1000 : 4'b0000);//后面附加一项4'b1000偏移针对SUB和SRA指令
-			`OP_RegImm: AluContrlD = {1'b0 ,Fn3} + (Fn7 == 7'b0100000 && Fn3 == 3'b101 ? 4'b1000 : 4'b0000);//后面附加一项4'b1000偏移针对SRAI指令
-			`OP_LUI:    AluContrlD = `LUI;
-			default:    AluContrlD = `ADD;
-		endcase
-	end
-endmodule
-
 //功能说明
     //ControlUnit       是本CPU的指令译码器，组合逻辑电路
 //输入
@@ -89,5 +18,91 @@ endmodule
     // AluSrc2D         表示Alu输入源2的选择
     // AluSrc1D         表示Alu输入源1的选择
     // ImmType          表示指令的立即数格式，所有类型定义在Parameters.v中   
-//实验要求  
-    //实现ControlUnit模块   
+`include "Parameters.v"   
+`define ControlOut {{JalD,JalrD},{MemToRegD},{RegWriteD},{MemWriteD},{LoadNpcD},{RegReadD},{BranchTypeD},{AluContrlD},{AluSrc1D,AluSrc2D},{ImmType}}
+module ControlUnit(
+    input wire [6:0] Op,
+    input wire [2:0] Fn3,
+    input wire [6:0] Fn7,
+    output reg JalD,
+    output reg JalrD,
+    output reg [2:0] RegWriteD,
+    output reg MemToRegD,
+    output reg [3:0] MemWriteD,
+    output reg LoadNpcD,
+    output reg [1:0] RegReadD,
+    output reg [2:0] BranchTypeD,
+    output reg [3:0] AluContrlD,
+    output reg [1:0] AluSrc2D,
+    output reg AluSrc1D,
+    output reg [2:0] ImmType
+    );
+	always@(*) 
+		case(Op)
+			7'b0000011: //Load
+				case(Fn3)
+					3'b000: /* LB */ `ControlOut = {{2'b0_0},{1'b1,`LB},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`ADD},{3'b0_10},{`ITYPE}};
+					3'b001: /* LH */ `ControlOut = {{2'b0_0},{1'b1,`LH},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`ADD},{3'b0_10},{`ITYPE}};
+					3'b010: /* LW */ `ControlOut = {{2'b0_0},{1'b1,`LW},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`ADD},{3'b0_10},{`ITYPE}};
+					3'b100: /* LBU */ `ControlOut = {{2'b0_0},{1'b1,`LBU},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`ADD},{3'b0_10},{`ITYPE}};
+					3'b101: /* LHU */ `ControlOut = {{2'b0_0},{1'b1,`LHU},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`ADD},{3'b0_10},{`ITYPE}};
+				endcase
+			7'b0100011: //Store
+				case(Fn3)
+					3'b000: /* SB */ `ControlOut = {{2'b0_0},{1'b0,`NOREGWRITE},{4'b0001},{1'b0},{2'b11},{`NOBRANCH},{`ADD},{3'b0_10},{`STYPE}};
+					3'b001: /* SH */ `ControlOut = {{2'b0_0},{1'b0,`NOREGWRITE},{4'b0011},{1'b0},{2'b11},{`NOBRANCH},{`ADD},{3'b0_10},{`STYPE}};
+					3'b010: /* SW */ `ControlOut = {{2'b0_0},{1'b0,`NOREGWRITE},{4'b1111},{1'b0},{2'b11},{`NOBRANCH},{`ADD},{3'b0_10},{`STYPE}};
+				endcase
+			7'b0110011: //REG-REG
+				case(Fn3)
+					3'b000: /*  */
+						case(Fn7)
+							7'b0000000: /* ADD */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b11},{`NOBRANCH},{`ADD},{3'b0_00},{`RTYPE}};
+							7'b0100000: /* SUB */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b11},{`NOBRANCH},{`SUB},{3'b0_00},{`RTYPE}};
+						endcase
+					3'b001: /* SLL */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b11},{`NOBRANCH},{`SLL},{3'b0_00},{`RTYPE}};
+					3'b010: /* SLT */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b11},{`NOBRANCH},{`SLT},{3'b0_00},{`RTYPE}};
+					3'b011: /* SLTU */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b11},{`NOBRANCH},{`SLTU},{3'b0_00},{`RTYPE}};
+					3'b100: /* XOR */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b11},{`NOBRANCH},{`XOR},{3'b0_00},{`RTYPE}};
+					3'b101:
+						case(Fn7)
+							7'b0000000: /* SRL */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b11},{`NOBRANCH},{`SRL},{3'b0_00},{`RTYPE}};
+							7'b0100000: /* SRA */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b11},{`NOBRANCH},{`SRA},{3'b0_00},{`RTYPE}};
+						endcase
+					3'b110: /* OR */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b11},{`NOBRANCH},{`OR},{3'b0_00},{`RTYPE}};
+					3'b111: /* AND */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b11},{`NOBRANCH},{`AND},{3'b0_00},{`RTYPE}};
+				endcase
+			7'b0010011: //REG-IMM
+				case(Fn3)
+					3'b000: /* ADDI */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`ADD},{3'b0_10},{`ITYPE}};
+					3'b001: /* SLLI */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`SLL},{3'b0_01},{`ITYPE}};
+					3'b010: /* SLTI */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`SLT},{3'b0_10},{`ITYPE}};
+					3'b011: /* SLTIU */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`SLTU},{3'b0_10},{`ITYPE}};
+					3'b100: /* XORI */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`XOR},{3'b0_10},{`ITYPE}};
+					3'b101:
+						case(Fn7)
+							7'b0000000: /* SRLI */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`SRL},{3'b0_01},{`ITYPE}};
+							7'b0100000: /* SRAI */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`SRA},{3'b0_01},{`ITYPE}};
+						endcase
+					3'b110: /* ORI */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`OR},{3'b0_10},{`ITYPE}};
+					3'b111: /* ANDI */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b10},{`NOBRANCH},{`AND},{3'b0_10},{`ITYPE}};
+				endcase
+			7'b0110111: /* LUI */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b00},{`NOBRANCH},{`LUI},{3'b0_10},{`UTYPE}};
+			7'b0010111: /* AUIPC */ `ControlOut = {{2'b0_0},{1'b0,`LW},{4'b0000},{1'b0},{2'b00},{`NOBRANCH},{`ADD},{3'b1_10},{`UTYPE}};
+			7'b1100011: //Branch
+				case(Fn3)
+					3'b000: /* BEQ */ `ControlOut = {{2'b0_0},{1'b0,`NOREGWRITE},{4'b0000},{1'b0},{2'b11},{`BEQ},{4'bxxxx},{3'b0_00},{`BTYPE}};
+					3'b001: /* BNE */ `ControlOut = {{2'b0_0},{1'b0,`NOREGWRITE},{4'b0000},{1'b0},{2'b11},{`BNE},{4'bxxxx},{3'b0_00},{`BTYPE}};
+					3'b100: /* BLT */ `ControlOut = {{2'b0_0},{1'b0,`NOREGWRITE},{4'b0000},{1'b0},{2'b11},{`BLT},{4'bxxxx},{3'b0_00},{`BTYPE}};
+					3'b101: /* BGE */ `ControlOut = {{2'b0_0},{1'b0,`NOREGWRITE},{4'b0000},{1'b0},{2'b11},{`BGE},{4'bxxxx},{3'b0_00},{`BTYPE}};
+					3'b110: /* BLTU */ `ControlOut = {{2'b0_0},{1'b0,`NOREGWRITE},{4'b0000},{1'b0},{2'b11},{`BLTU},{4'bxxxx},{3'b0_00},{`BTYPE}};
+					3'b111: /* BGEU */ `ControlOut = {{2'b0_0},{1'b0,`NOREGWRITE},{4'b0000},{1'b0},{2'b11},{`BGEU},{4'bxxxx},{3'b0_00},{`BTYPE}};
+				endcase
+			7'b1101111: /* JAL */ `ControlOut = {{2'b1_0},{1'b0,`LW},{4'b0000},{1'b1},{2'b00},{`NOBRANCH},{4'bxxxx},{3'bx_xx},{`JTYPE}};
+			7'b1100111: /* JALR */ `ControlOut = {{2'b0_1},{1'b0,`LW},{4'b0000},{1'b1},{2'b10},{`NOBRANCH},{`ADD},{3'b0_10},{`ITYPE}};
+			default: `ControlOut = 26'b0;
+		endcase
+			
+endmodule
+
+ 

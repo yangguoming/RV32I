@@ -1,18 +1,5 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: USTC ESLAB(Embeded System Lab)
-// Engineer: Haojun Xia
-// Create Date: 2019/02/08
-// Design Name: RISCV-Pipline CPU
-// Module Name: testBench
-// Target Devices: Nexys4
-// Tool Versions: Vivado 2017.4.1
-// Description: This testBench Help users to initial the bram content, by loading .data file and .inst file.
-//				Then give signals to start the execution of our cpu
-//				When all instructions finish their executions, this testBench will dump the Instruction Bram and Data Bram's content to .txt files 
-// !!! ALL YOU NEED TO CHANGE IS 4 FILE PATH BELOW !!!	
-//				(they are all optional, you can run cpu without change paths here,if files are failed to open, we will not dump the content to .txt and will not try to initial your bram)
-//////////////////////////////////////////////////////////////////////////////////
+
 `define DataRamContentLoadPath "E:\\RISC-V\\RISC-V\\Simulation\\SimFiles\\1testAll.data"
 `define InstRamContentLoadPath "E:\\RISC-V\\RISC-V\\Simulation\\SimFiles\\1testAll.inst"
 //`define DataRamContentLoadPath "E:\\RISC-V\\RISC-V\\Simulation\\SimFiles\\Number2Ascii.data"

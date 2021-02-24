@@ -1,14 +1,5 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: USTC ESLAB（Embeded System Lab）
-// Engineer: Haojun Xia
-// Create Date: 2019/02/08
-// Design Name: RISCV-Pipline CPU
-// Module Name: EXSegReg
-// Target Devices: Nexys4
-// Tool Versions: Vivado 2017.4.1
-// Description: ID-EX Segment Register
-//////////////////////////////////////////////////////////////////////////////////
+
 module EXSegReg(
     input wire clk,
     input wire en,
@@ -118,8 +109,3 @@ module EXSegReg(
         end
     
 endmodule
-
-//功能说明
-    //本模块是支持同步清零的段寄存器，当EN==0时寄存器状态保持不变（也不会执行清零）
-//实验要求  
-    //无需修改

@@ -1,16 +1,19 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: USTC ESLAB
-// Engineer: Xuan Wang (wgg@mail.ustc.edu.cn)
-// 
-// Create Date: 2019/02/08 16:29:41
-// Design Name: RISCV-Pipline CPU
-// Module Name: InstructionRamWrapper
-// Target Devices: Nexys4
-// Tool Versions: Vivado 2017.4.1
-// Description: a Verilog-based ram which can be systhesis as BRAM
-// 
-//////////////////////////////////////////////////////////////////////////////////
+
+//功能说明
+    //同步读写bram，a口只读，用于取指，b口可读写，用于外接debug_module进行读写
+    //写使能为1bit，不支持byte write
+//输入
+    //clk               输入时钟
+    //addra             a口读地址
+    //addrb             b口读写地址
+    //dinb              b口写输入数据
+    //web               b口写使能
+//输出
+    //douta             a口读数据
+    //doutb             b口读数据
+//实验要求  
+    //无需修改
 module InstructionRam(
     input  clk,
     input  web,
@@ -43,18 +46,3 @@ always @ (posedge clk)
         ram_cell[addrbl] <= dinb;
 
 endmodule
-
-//功能说明
-    //同步读写bram，a口只读，用于取指，b口可读写，用于外接debug_module进行读写
-    //写使能为1bit，不支持byte write
-//输入
-    //clk               输入时钟
-    //addra             a口读地址
-    //addrb             b口读写地址
-    //dinb              b口写输入数据
-    //web               b口写使能
-//输出
-    //douta             a口读数据
-    //doutb             b口读数据
-//实验要求  
-    //无需修改

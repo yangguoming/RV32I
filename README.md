@@ -1,3 +1,3 @@
 # RV32I
-simple implement 37 instructions
+![isa](https://github.com/yangguoming/RV32I/blob/main/pic/isa.PNG)
 ![pipline](https://github.com/yangguoming/RV32I/blob/main/pic/pipline.PNG)
